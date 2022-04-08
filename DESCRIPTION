@@ -1,0 +1,17 @@
+Package: MAPLU
+Type: Package
+Title: Dados Hidrológicos e similares para Brasília, Distrito Federal
+Version: 0.1.0
+Author: Thiago Lappicy
+Maintainer: The package maintainer <lappicy@gmail.com>
+Description: Esse pacote visa facilitar as análises hidrológicas em Brasília.
+    Nele, existem funções para puxar dados telemétricos da ANA.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    geobr,
+    sf,
+    utils,
+    XML
+RoxygenNote: 7.1.2
