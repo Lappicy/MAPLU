@@ -46,7 +46,19 @@ ANA_info <- function(estacao_codigo = "",
 
 
   # Ler o shp da UF selecionada pelo geobr ####
-  # é usado SIRGAS 2000 e CRS(4674)
+  # o geobr utiliza o SIRGAS 2000 e CRS(4674)
+  
+  # primeiro deixamos o "UF_Brasil" em maiuscula, para evitar erros
+  UF_Brasil <- toupper(UF_Brasil)
+  
+  # Se a UF não for válida, a função para e é printado um aviso na tela
+  if(!(UF_Brasil %in% c("AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO",
+                        "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
+                        "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"))){
+    stop("nome da UF não é válida!\nUsar apenas a sigla (2 letras).")
+  }
+  
+  # Com o UF sendo válido, puxa-se apenas os dados dessa UF
   UF_sf <- geobr::read_state(code_state = UF_Brasil)
 
   # Projeção para a definida no começo do código (padrão é a UTM 23S)
