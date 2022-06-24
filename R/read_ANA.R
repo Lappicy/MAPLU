@@ -1,23 +1,33 @@
-# Função para puxar informação das estações telemétricas da ANA do DF ####
-#' Puxar informações sobre as estações da ANA dentro do DF
+# Função para puxar informação das estações telemétricas da ANA de qualquer Unidade Federativa do Brasil ####
+#' Puxar informações sobre as estações da ANA dentro de uma UF específica
 #'
 #' @param estacao_codigo se a estação está ativa (0) ou em manutenção (1).
 #' O *default* é puxar os dois tipos
 #' @param origem_codigo de quem é o dado. O *default* é puxar todos.
 #' Os valores podem ser:
 #' 0-Todas, 1-ANA/INPE, 2-ANA/SIVAM, 3-RES_CONJ_03, 4-CotaOnline, 5-Projetos Especiais.
-#' @param buffer_DF tamanho do buffer em volta do DF. O *default* é de 10km.
-#' Para não utilizar um *buffer* basta utilizar buffer_DF = 0.
+#' @param UF_Brasil qual a UF (Unidade Federativa se quer analisar). O *default* é o "DF" (Distrito Federal).
+#' Caso se selecione uma UF que não está no geobr, a função será paradad ("stop") e será retornado um aviso na tela.
+#' @param buffer_UF tamanho do buffer em volta da UF escolhilda anteriormente. O *default* é de 10km.
+#' Para não utilizar um *buffer* basta utilizar buffer_UF = 0.
+#' @param projecao qual a projeção a ser utilizada para rodar o programa. O *default* é a UTM 23S (aconselhada para o DF).
+#' As projeções devem ser informadas pelo número EPSG. Detalhes podem ser encontrados como no site <https://epsg.io/>.
 #'
 #' @return sf dataframe
 #' @export
 #'
 #' @examples
+#' # Para puxar todas as estações do DF + entorno (10km)
 #' teste_ANA_info <- ANA_info()
-#' ANA_info_sem_buffer <- ANA_info(buffer_DF = 0)
+#'
+#' # Para puxar todas as estações contidas dentro do limite do DF
+#' ANA_info_sem_buffer <- ANA_info(buffer_UF = 0)
+
 ANA_info <- function(estacao_codigo = "",
                      origem_codigo = "",
-                     buffer_DF = 10000){
+                     UF_Brasil = "DF",
+                     buffer_UF = 10000,
+                     projecao = 31981){
 
   # Demora +-8s
 
@@ -35,15 +45,15 @@ ANA_info <- function(estacao_codigo = "",
   cadastro_estacoes <- XML::xmlToDataFrame(nodes = nodes_doc)
 
 
-  # Ler o shp do DF pelo geobr ####
+  # Ler o shp da UF selecionada pelo geobr ####
   # é usado SIRGAS 2000 e CRS(4674)
-  bsb_sf <- geobr::read_state(code_state = "DF")
+  UF_sf <- geobr::read_state(code_state = UF_Brasil)
 
-  # Projeção para UTM zona 23S
-  bsb_sf_UTM23S <- sf::st_transform(bsb_sf, crs = 31981)
+  # Projeção para a definida no começo do código (padrão é a UTM 23S)
+  UF_sf_proj <- sf::st_transform(UF_sf, crs = projecao)
 
-  # Buffer em volta do DF
-  buffer_bsb_sf_UTM23S <- sf::st_buffer(bsb_sf_UTM23S, dist = buffer_DF)
+  # Buffer em volta da UF selecionada
+  buffer_UF_sf_proj <- sf::st_buffer(UF_sf_proj, dist = buffer_UF)
 
 
   # Selecionar so as estacoes dentro do Buffer ####
@@ -52,28 +62,28 @@ ANA_info <- function(estacao_codigo = "",
                                        coords = c("Longitude", "Latitude"),
                                        crs = 4326)
 
-  # Projeção dos dados igual ao DF (UTM 23S)
-  cadastro_estacoes_sf_UTM23S <- sf::st_transform(cadastro_estacoes_sf,
-                                                  crs = 31981)
+  # Projeção dos dados no formato definido (o padrão é UTM 23S)
+  cadastro_estacoes_sf_proj <- sf::st_transform(cadastro_estacoes_sf,
+                                                crs = projecao)
 
   # Quais estações estão dentro do Buffer
   # A função st_intersection() retorna apenas a geometria
-  estacoes_BSB <- sf::st_intersection(cadastro_estacoes_sf_UTM23S$geometry,
-                                      buffer_bsb_sf_UTM23S$geom)
+  estacoes_UF <- sf::st_intersection(cadastro_estacoes_sf_proj$geometry,
+                                     buffer_UF_sf_proj$geom)
 
   # Transformar objeto em sf
-  estacoes_BSB <- sf::st_as_sf(estacoes_BSB)
+  estacoes_UF <- sf::st_as_sf(estacoes_UF)
 
-  # Pegar a linha dos dados que estão dentro do DF
-  bsb_dados <- which(cadastro_estacoes_sf_UTM23S$geometry %in% estacoes_BSB$x)
+  # Pegar a linha dos dados que estão dentro da UF definida
+  UF_dados <- which(cadastro_estacoes_sf_proj$geometry %in% estacoes_UF$x)
 
   # Filtrar a tabela para conter apenas esses dados
-  estacoes_BSB_dados <- cadastro_estacoes_sf_UTM23S[bsb_dados,]
+  estacoes_UF_dados <- cadastro_estacoes_sf_proj[UF_dados,]
 
   # Trocar o nome das linhas
-  rownames(estacoes_BSB_dados) <- seq_len(nrow(estacoes_BSB_dados))
+  rownames(estacoes_UF_dados) <- seq_len(nrow(estacoes_UF_dados))
 
-  return(estacoes_BSB_dados)
+  return(estacoes_UF_dados)
 
 
 
