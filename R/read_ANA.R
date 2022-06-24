@@ -1,6 +1,11 @@
 # Função para puxar informação das estações telemétricas da ANA de qualquer Unidade Federativa do Brasil ####
 #' Puxar informações sobre as estações da ANA dentro de uma UF específica
 #'
+#' São utilizados os pacotes:
+#'    + "XML" (para acessar dados online)
+#'    + "geobr" (para puxar o shp das UFs do Brasil)
+#'    + "sf" (para fazer manipulações com shapefiles dentro do R)
+#'
 #' @param estacao_codigo se a estação está ativa (0) ou em manutenção (1).
 #' O *default* é puxar os dois tipos
 #' @param origem_codigo de quem é o dado. O *default* é puxar todos.
@@ -108,6 +113,10 @@ ANA_info <- function(estacao_codigo = "",
 
 # Função para puxar dados de determinada estação da ANA ####
 #' Puxar dados para estações da ANA
+#'
+#' São utilizados os pacotes:
+#'    + "XML" (para acessar dados online)
+#'    + "utils" (para colocar barra de progressão)
 #'
 #' @param data_inicio primeira data que se quer os dados
 #' @param data_fim última data que se quer os dados. O *default* é a data atual.
